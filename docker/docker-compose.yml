@@ -1,0 +1,65 @@
+version: "2"
+services:
+  zookeeper:
+    image: confluent/zookeeper
+    ports:
+      - "2181:2181"
+  opentsdb:
+    build:
+      context: ./opentsdb/
+    image: jeffsvds/opentsdb
+    ports:
+      - "4242:4242"
+      - "60030:60030"
+  grafana:
+    build:
+      context: ./grafana/
+    image: jeffsvds/grafana
+    ports:
+      - "3000:3000"
+    links:
+      - opentsdb:opentsdb
+  kafka:
+    image: confluent/kafka
+    links:
+      - zookeeper:zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOSTNAME: "${DOCKER_MACHINE_IP}"
+      KAFKA_ADVERTISED_PORT: 9092
+  schema-registry:
+    image: confluent/schema-registry
+    links:
+      - zookeeper:zookeeper
+      - kafka:kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SR_KAFKASTORE_CONNECTION_URL: "${DOCKER_MACHINE_IP}:2181"
+  eeg-kafka-streams:
+    build:
+      context: ./
+    image: jeffsvds/eeg-kafka-streams
+    links:
+      - zookeeper:zookeeper
+      - kafka:kafka
+      - schema-registry:schema-registry
+  confluent-control-center:
+    image: jeffsvds/confluent-control-center
+    links:
+      - zookeeper:zookeeper
+      - kafka:kafka
+      - schema-registry:schema-registry
+    ports:
+      - "9021:9021"
+  kafka-connect-opentsdb:
+    image: jeffsvds/kafka-connect-opentsdb
+    links:
+      - zookeeper:zookeeper
+      - opentsdb:opentsdb
+      - kafka:kafka
+      - schema-registry:schema-registry
+      - confluent-control-center:confluent-control-center
+    ports:
+      - "8083:8083"

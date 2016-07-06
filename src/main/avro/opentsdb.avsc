@@ -1,0 +1,11 @@
+{
+  "type" : "record",
+  "namespace" : "com.svds.kafka.connect.opentsdb",
+  "name" : "Point",
+  "fields" : [
+    {"name" : "metric", "type" : "string"},
+    {"name" : "timestamp", "type" : {"type":"long", "logicalType":"timestamp-millis"} },
+    {"name" : "value", "type" : "double"},
+    {"name" : "tags", "type" : {"type": "map", "values": "string"} }
+  ]
+}
